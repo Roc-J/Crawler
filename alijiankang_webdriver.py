@@ -12,6 +12,7 @@ import time
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 import sys
+import tool
 defaultencoding = 'utf-8'
 if sys.getdefaultencoding() != defaultencoding:
     reload(sys)
@@ -27,6 +28,7 @@ class AlijiankangCrawler:
         self.driver = webdriver.Chrome(self.path)
         self.driver.set_page_load_timeout(10)
         self.driver.maximize_window()
+        self.tool = tool.Tool()
 
     # 模拟登陆
     def simulation_load(self):
@@ -78,7 +80,7 @@ class AlijiankangCrawler:
             goodsName = item[1]
             # pageStories.append([goodsURL, goodsName])
             pageURL.append(goodsURL)
-        return pageURL
+        return pageURL[:len(pageURL)-8]
 
     # 根据每一条URL地址进行商品详细信息的抓取
     def getPageContent(self, goodsURL):
@@ -92,6 +94,7 @@ class AlijiankangCrawler:
         contents = self.driver.page_source
 
         goods_list = []
+        goods_list.append(goodsURL)
         # 开始进行商品详细的抓取
         match_price = '<dl class="tm-price-panel.*?<span class="tm-price">(.*?)</span>'
         pattern_price = re.compile(match_price, re.S)
@@ -180,7 +183,7 @@ class AlijiankangCrawler:
             # print item[13].strip()
             # print item[14].strip()
             for i in range(15):
-                goods_list.append(item[i].strip())
+                goods_list.append(self.tool.strSplit(item[i].strip()))
         return goods_list
 
     def save(self, goods_list):
@@ -211,28 +214,24 @@ class AlijiankangCrawler:
     def start(self):
         self.simulation_load()
         urlLists = []
-        for i in range(1, 16):
+        for i in range(15, 16):
             urlList = self.getPageItems(i)
             urlLists += urlList
-        urlLists = set(urlLists)
-        urlLists = list(urlLists)
+        urlSet = set(urlLists)
+        urlLists = list(urlSet)
         print len(urlLists)
 
-        # goods_lists = []
-        # for url in urlLists:
-        #     goods_item = self.getPageContent(url)
-        #     goods_lists.append(goods_item)
-        # self.save(goods_lists)
+        goods_lists = []
+        for url in urlLists:
+            goods_item = self.getPageContent(url)
+            goods_lists.append(goods_item)
+            time.sleep(2)
+        self.save(goods_lists)
+
+        self.driver.close()
+
+
 
 spider = AlijiankangCrawler()
 spider.start()
-# spider.simulation_load()
-# # 爬取第一页的URL以及名称,这个类别固定了，不好，要改进
-# urlList = spider.getPageItems(1)
-# # 爬取第一个URL
-# goodsURL = urlList[0]
-#
-# goods_item = spider.getPageContent(goodsURL)
-# goods_lists = []
-# goods_lists.append(goods_item)
-# spider.save(goods_lists)
+

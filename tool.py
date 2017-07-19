@@ -29,3 +29,6 @@ class Tool:
         x = re.sub(self.removeNoneLine, '', x)
         return x.strip()
 
+    def strSplit(self, x):
+        items = x.split(':')
+        return items[-1].strip()
